@@ -11,8 +11,8 @@ A coaching app where a coach and their athletes work from one shared, live recor
 | Phase | What | State |
 | --- | --- | --- |
 | 1 · Foundation | Schema + permission rules, sign-in, onboarding, athlete/coach tabs | ✅ built and live on the `gym-app-dev` Supabase project |
-| 2 · Coach connect | Invites, links, sharing scopes, roster | next |
-| 3 · Training | Exercise library, program builder, assign, workout logging | |
+| 2 · Coach connect | Invites, links, sharing scopes, roster | ✅ built |
+| 3 · Training | Exercise library, program builder, assign, workout logging | next |
 | 4 · Nutrition and progress | Food, targets, water, measurements, photos | |
 | 5 · Check-ins and communication | Check-ins, feedback, pain reports, chat, reminders, push | |
 | 6 · Beta, then launch | TestFlight / Play internal testing with real coaches | |

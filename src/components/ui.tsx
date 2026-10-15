@@ -3,10 +3,15 @@
  * Visual language follows the PIVOT prototype: dark carbon cards, bone text,
  * an acid accent for the primary action, gold for anything the coach owns.
  */
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { router } from 'expo-router';
 import type { ReactNode } from 'react';
 import {
   ActivityIndicator,
+  Alert,
+  Platform,
   Pressable,
+  Switch,
   ScrollView,
   StyleSheet,
   Text,
@@ -209,6 +214,113 @@ export function Steps({ count, current }: { count: number; current: number }) {
   );
 }
 
+/** Screen title with a back arrow, for screens opened on top of the tabs. */
+export function BackHeader({ title, eyebrow, onBack }: { title: string; eyebrow?: string; onBack?: () => void }) {
+  return (
+    <View style={{ gap: space.sm }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Back"
+        hitSlop={12}
+        onPress={onBack ?? (() => (router.canGoBack() ? router.back() : router.replace('/')))}
+        style={{ alignSelf: 'flex-start', paddingVertical: space.xs }}>
+        <Ionicons name="chevron-back" size={24} color={colors.bone} />
+      </Pressable>
+      {eyebrow ? <Eyebrow tone="acid">{eyebrow}</Eyebrow> : null}
+      <Title>{title}</Title>
+    </View>
+  );
+}
+
+/** A tappable list row with an optional value and chevron. */
+export function Row({
+  title,
+  detail,
+  right,
+  onPress,
+  tone = 'bone',
+}: {
+  title: string;
+  detail?: string;
+  right?: ReactNode;
+  onPress?: () => void;
+  tone?: 'bone' | 'red' | 'gold';
+}) {
+  return (
+    <Pressable
+      accessibilityRole={onPress ? 'button' : undefined}
+      disabled={!onPress}
+      onPress={onPress}
+      style={({ pressed }) => [styles.row, pressed && onPress && { opacity: 0.7 }]}>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={[styles.rowTitle, { color: colors[tone] }]}>{title}</Text>
+        {detail ? <Text style={styles.rowDetail}>{detail}</Text> : null}
+      </View>
+      {right}
+      {onPress ? <Ionicons name="chevron-forward" size={18} color={colors.steel} /> : null}
+    </Pressable>
+  );
+}
+
+/** A labelled on/off switch. */
+export function ToggleRow({
+  title,
+  detail,
+  value,
+  onChange,
+  disabled,
+}: {
+  title: string;
+  detail?: string;
+  value: boolean;
+  onChange: (v: boolean) => void;
+  disabled?: boolean;
+}) {
+  return (
+    <View style={styles.row}>
+      <View style={{ flex: 1, gap: 2 }}>
+        <Text style={styles.rowTitle}>{title}</Text>
+        {detail ? <Text style={styles.rowDetail}>{detail}</Text> : null}
+      </View>
+      <Switch
+        accessibilityLabel={title}
+        value={value}
+        onValueChange={onChange}
+        disabled={disabled}
+        trackColor={{ false: colors.graphite, true: colors.acid }}
+        thumbColor={value ? colors.black : colors.steel}
+        ios_backgroundColor={colors.graphite}
+        {...(Platform.OS === 'web' ? ({ activeThumbColor: colors.black } as object) : {})}
+      />
+    </View>
+  );
+}
+
+/** A group of rows in one card. */
+export function List({ children }: { children: ReactNode }) {
+  return <View style={styles.list}>{children}</View>;
+}
+
+export function Badge({ label, tone = 'steel' }: { label: string; tone?: 'steel' | 'acid' | 'gold' | 'red' }) {
+  return (
+    <View style={[styles.badge, { borderColor: colors[tone] }]}>
+      <Text style={[styles.badgeText, { color: colors[tone] }]}>{label}</Text>
+    </View>
+  );
+}
+
+/** Yes/no confirmation that works on phones and on the web. */
+export function confirm(title: string, message: string, action: string, onYes: () => void) {
+  if (Platform.OS === 'web') {
+    if (globalThis.confirm?.(`${title}\n\n${message}`)) onYes();
+    return;
+  }
+  Alert.alert(title, message, [
+    { text: 'Cancel', style: 'cancel' },
+    { text: action, style: 'destructive', onPress: onYes },
+  ]);
+}
+
 export function Loading() {
   return (
     <View style={{ flex: 1, backgroundColor: colors.black, alignItems: 'center', justifyContent: 'center' }}>
@@ -281,4 +393,20 @@ const styles = StyleSheet.create({
   card: { backgroundColor: colors.carbon, borderRadius: radius.lg, padding: space.xl, borderWidth: 1, borderColor: colors.line },
   diamond: { width: 6, height: 6, backgroundColor: colors.acid, transform: [{ rotate: '45deg' }], marginTop: 8 },
   step: { flex: 1, height: 3, borderRadius: 2, backgroundColor: colors.line2 },
+
+  list: { backgroundColor: colors.carbon, borderRadius: radius.lg, borderWidth: 1, borderColor: colors.line, overflow: 'hidden' },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: space.md,
+    paddingVertical: space.lg,
+    paddingHorizontal: space.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.line,
+    minHeight: 60,
+  },
+  rowTitle: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.bone },
+  rowDetail: { fontFamily: fonts.body, fontSize: 13, color: colors.steel, lineHeight: 18 },
+  badge: { borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 3 },
+  badgeText: { fontFamily: fonts.bodyHeavy, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
 });
