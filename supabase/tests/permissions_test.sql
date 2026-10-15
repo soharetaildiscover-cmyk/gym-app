@@ -220,6 +220,55 @@ select test.ok((select count(*) from public.program_templates) = 0, 'the athlete
 reset role;
 
 -- ---------------------------------------------------------------------------
+\echo '— Program builder'
+select test.as_user('11111111-1111-1111-1111-111111111111'); set role authenticated;
+select public.save_program(null, jsonb_build_object(
+  'name', 'Push / Pull', 'goal', 'Build muscle', 'level', 'Intermediate', 'weeks', 8,
+  'sessions', jsonb_build_array(
+    jsonb_build_object('name', 'Push', 'est_minutes', 60, 'weekdays', jsonb_build_array(1, 4),
+      'exercises', jsonb_build_array(jsonb_build_object('exercise_id', (select id from public.exercises where name = 'Bench Press'), 'sets', 4, 'reps', '6-8', 'target_load_kg', 90, 'rest_seconds', 150))),
+    jsonb_build_object('name', 'Pull', 'weekdays', jsonb_build_array(2, 5),
+      'exercises', jsonb_build_array(jsonb_build_object('exercise_id', (select id from public.exercises where name = 'Barbell Row'), 'sets', 4, 'reps', '8')))
+  ))) as pp_id \gset
+select test.ok((select count(*) from public.template_days where template_id = :'pp_id') = 2, 'the coach saves a whole program in one step');
+select test.ok((select weekdays from public.template_days where template_id = :'pp_id' and position = 1) = '{1,4}', 'each session keeps its weekdays');
+select public.save_program(:'pp_id', jsonb_build_object('name', 'Push / Pull v2', 'weeks', 6,
+  'sessions', jsonb_build_array(jsonb_build_object('name', 'Full body', 'weekdays', jsonb_build_array(1),
+    'exercises', jsonb_build_array(jsonb_build_object('exercise_id', (select id from public.exercises where name = 'Back Squat'), 'sets', 5, 'reps', '5'))))));
+select test.ok((select count(*) from public.template_days where template_id = :'pp_id') = 1
+           and (select name from public.program_templates where id = :'pp_id') = 'Push / Pull v2', 'saving again replaces the sessions');
+select test.refused(format($$ select public.save_program(%L, jsonb_build_object('name', 'Clash', 'sessions', jsonb_build_array(
+  jsonb_build_object('name', 'A', 'weekdays', jsonb_build_array(1), 'exercises', jsonb_build_array(jsonb_build_object('exercise_id', (select id from public.exercises where name = 'Plank'), 'sets', 3, 'reps', '30'))),
+  jsonb_build_object('name', 'B', 'weekdays', jsonb_build_array(1), 'exercises', jsonb_build_array(jsonb_build_object('exercise_id', (select id from public.exercises where name = 'Plank'), 'sets', 3, 'reps', '30')))))) $$, :'pp_id'),
+  'two sessions cannot share a weekday');
+reset role;
+
+select test.as_user('33333333-3333-3333-3333-333333333333'); set role authenticated;
+select test.refused(format($$ select public.save_program(%L, jsonb_build_object('name', 'Stolen', 'sessions', jsonb_build_array(
+  jsonb_build_object('name', 'X', 'exercises', jsonb_build_array(jsonb_build_object('exercise_id', (select id from public.exercises where name = 'Plank'), 'sets', 3, 'reps', '30')))))) $$, :'pp_id'),
+  'another user cannot overwrite the coach''s program');
+reset role;
+
+select test.as_user('22222222-2222-2222-2222-222222222222'); set role authenticated;
+update public.coaching_links set scopes = array_remove(scopes, 'training') where athlete_id = '22222222-2222-2222-2222-222222222222';
+reset role;
+select test.as_user('11111111-1111-1111-1111-111111111111'); set role authenticated;
+select test.refused(format($$ select public.assign_program(%L, '{22222222-2222-2222-2222-222222222222}', current_date) $$, :'pp_id'),
+  'the coach cannot assign a program while Training is not shared');
+reset role;
+select test.as_user('22222222-2222-2222-2222-222222222222'); set role authenticated;
+update public.coaching_links set scopes = array_append(scopes, 'training') where athlete_id = '22222222-2222-2222-2222-222222222222';
+reset role;
+select test.as_user('11111111-1111-1111-1111-111111111111'); set role authenticated;
+select test.ok((select count(*) from public.assign_program(:'pp_id', '{22222222-2222-2222-2222-222222222222}', current_date + 7)) = 1, 'the coach schedules the new program to start next week');
+reset role;
+select test.as_user('22222222-2222-2222-2222-222222222222'); set role authenticated;
+select test.ok((select count(*) from public.assignments where status = 'active') = 1 and (select count(*) from public.assignments where status = 'scheduled') = 1,
+  'the current program keeps running until the new one starts');
+select test.ok((select snapshot #> '{days,0,weekdays}' from public.assignments where status = 'scheduled') = '[1]'::jsonb, 'the weekly schedule is copied to the athlete');
+reset role;
+
+-- ---------------------------------------------------------------------------
 \echo '— Ending coaching'
 select test.as_user('11111111-1111-1111-1111-111111111111'); set role authenticated;
 update public.coaching_links set status = 'ended' where coach_id = '11111111-1111-1111-1111-111111111111';
@@ -229,7 +278,7 @@ select test.ok((select count(*) from public.profiles) = 1, 'after ending, the co
 select test.refused($$ update public.coaching_links set status = 'active' $$, 'an ended link cannot be re-opened');
 reset role;
 select test.as_user('22222222-2222-2222-2222-222222222222'); set role authenticated;
-select test.ok((select count(*) from public.workout_sessions) = 1 and (select count(*) from public.assignments) = 1, 'the athlete keeps all their history');
+select test.ok((select count(*) from public.workout_sessions) = 1 and (select count(*) from public.assignments) = 2, 'the athlete keeps all their history');
 select test.ok((select count(*) from public.redeem_invite('SPARE001', '{training}')) = 1, 'the athlete can join a coach again after ending');
 reset role;
 

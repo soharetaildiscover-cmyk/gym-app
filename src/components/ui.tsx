@@ -214,6 +214,78 @@ export function Steps({ count, current }: { count: number; current: number }) {
   );
 }
 
+/** A small labelled input for numbers in dense rows (sets, reps, kg, rest). */
+export function MiniField({ label, ...input }: TextInputProps & { label: string }) {
+  return (
+    <View style={{ flex: 1, gap: 4, minWidth: 0 }}>
+      <Text style={styles.miniLabel}>{label}</Text>
+      <TextInput
+        placeholderTextColor={colors.steel}
+        selectionColor={colors.acid}
+        {...input}
+        style={[styles.miniInput, input.style]}
+      />
+    </View>
+  );
+}
+
+/** − value + control. */
+export function Stepper({ value, onChange, min, max, suffix }: { value: number; onChange: (v: number) => void; min: number; max: number; suffix?: string }) {
+  const btn = (label: string, next: number, disabled: boolean) => (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={label === '−' ? 'Decrease' : 'Increase'}
+      disabled={disabled}
+      onPress={() => onChange(next)}
+      style={[styles.stepBtn, disabled && { opacity: 0.3 }]}>
+      <Text style={{ color: colors.bone, fontFamily: fonts.bodyBold, fontSize: 20 }}>{label}</Text>
+    </Pressable>
+  );
+  return (
+    <View style={styles.stepper}>
+      {btn('−', value - 1, value <= min)}
+      <Text style={{ flex: 1, textAlign: 'center', color: colors.bone, fontFamily: fonts.display, fontSize: 18 }}>
+        {value}
+        {suffix ? ` ${suffix}` : ''}
+      </Text>
+      {btn('+', value + 1, value >= max)}
+    </View>
+  );
+}
+
+/** A row of small pills where several can be on. */
+export function PillGroup<T extends string | number>({
+  options,
+  selected,
+  onToggle,
+  disabled,
+}: {
+  options: { value: T; label: string }[];
+  selected: T[];
+  onToggle: (v: T) => void;
+  disabled?: T[];
+}) {
+  return (
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: space.sm }}>
+      {options.map((o) => {
+        const on = selected.includes(o.value);
+        const off = !on && (disabled ?? []).includes(o.value);
+        return (
+          <Pressable
+            key={String(o.value)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: on, disabled: off }}
+            disabled={off}
+            onPress={() => onToggle(o.value)}
+            style={[styles.pill, { minWidth: 0, height: 38 }, on && styles.pillOn, off && { opacity: 0.3 }]}>
+            <Text style={[styles.pillText, { fontSize: 14 }, on && { color: colors.black }]}>{o.label}</Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
 /** Screen title with a back arrow, for screens opened on top of the tabs. */
 export function BackHeader({ title, eyebrow, onBack }: { title: string; eyebrow?: string; onBack?: () => void }) {
   return (
@@ -407,6 +479,29 @@ const styles = StyleSheet.create({
   },
   rowTitle: { fontFamily: fonts.bodyBold, fontSize: 15, color: colors.bone },
   rowDetail: { fontFamily: fonts.body, fontSize: 13, color: colors.steel, lineHeight: 18 },
+  miniLabel: { fontFamily: fonts.bodyHeavy, fontSize: 10, letterSpacing: 1, color: colors.steel, textTransform: 'uppercase' },
+  miniInput: {
+    height: 42,
+    borderRadius: radius.sm,
+    backgroundColor: colors.graphite,
+    borderWidth: 1,
+    borderColor: colors.line2,
+    paddingHorizontal: space.sm,
+    color: colors.bone,
+    fontFamily: fonts.displayMedium,
+    fontSize: 16,
+    textAlign: 'center',
+  },
+  stepper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 48,
+    borderRadius: radius.md,
+    backgroundColor: colors.carbon,
+    borderWidth: 1,
+    borderColor: colors.line2,
+  },
+  stepBtn: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
   badge: { borderWidth: 1, borderRadius: radius.pill, paddingHorizontal: 8, paddingVertical: 3 },
   badgeText: { fontFamily: fonts.bodyHeavy, fontSize: 10, letterSpacing: 1, textTransform: 'uppercase' },
 });

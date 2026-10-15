@@ -3,7 +3,9 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Text, View } from 'react-native';
 
 import { BackHeader, Badge, Body, Button, Card, ComingSoon, Eyebrow, List, Loading, Screen, confirm } from '@/components/ui';
+import { ProgramHeader, WeekSchedule } from '@/components/program-view';
 import { SCOPES, sinceLabel, useRoster, useUpdateLink } from '@/lib/coaching';
+import { useAthletePrograms } from '@/lib/programs';
 import { GOALS } from '@/lib/types';
 import { colors, fonts, space } from '@/theme';
 
@@ -12,6 +14,8 @@ export default function AthleteDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const roster = useRoster();
   const update = useUpdateLink();
+  const link = roster.data?.find((r) => r.id === id);
+  const programs = useAthletePrograms(link?.athlete_id);
 
   if (roster.isPending) return <Loading />;
   const a = roster.data?.find((r) => r.id === id);
@@ -73,10 +77,31 @@ export default function AthleteDetail() {
         })}
       </List>
 
+      <View style={{ gap: space.sm }}>
+        <Eyebrow>Program</Eyebrow>
+        {programs.data?.active || programs.data?.scheduled ? (
+          <ProgramHeader active={programs.data.active} scheduled={programs.data.scheduled} />
+        ) : (
+          <Body>{programs.isPending ? 'Loading…' : `${first} has no program yet.`}</Body>
+        )}
+        {a.status === 'active' && a.scopes.includes('training') ? (
+          <Button
+            kind={programs.data?.active ? 'secondary' : 'primary'}
+            label={programs.data?.active ? 'Change program' : 'Assign a program'}
+            onPress={() => router.push({ pathname: '/assign', params: { athlete: a.athlete_id } })}
+          />
+        ) : (
+          <Body tone="steel" style={{ fontSize: 13 }}>
+            {first} needs to be active and sharing Training before you can assign a program.
+          </Body>
+        )}
+        {programs.data?.active ? <WeekSchedule assignment={programs.data.active} /> : null}
+      </View>
+
       <ComingSoon
-        phase="Phases 3–5"
-        title={`${first}’s training, food and check-ins`}
-        items={['Program, workouts and progress', 'Nutrition against target', 'Weekly check-ins to review']}
+        phase="Next"
+        title={`${first}’s logged workouts, food and check-ins`}
+        items={['What they actually lifted vs. your targets', 'Nutrition against target', 'Weekly check-ins to review']}
       />
 
       <Button

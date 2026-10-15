@@ -12,7 +12,7 @@ A coaching app where a coach and their athletes work from one shared, live recor
 | --- | --- | --- |
 | 1 · Foundation | Schema + permission rules, sign-in, onboarding, athlete/coach tabs | ✅ built and live on the `gym-app-dev` Supabase project |
 | 2 · Coach connect | Invites, links, sharing scopes, roster | ✅ built |
-| 3 · Training | Exercise library, program builder, assign, workout logging | next |
+| 3 · Training | Exercise library, program builder, assign, workout logging | 🟡 program builder + assigning built; workout logging next |
 | 4 · Nutrition and progress | Food, targets, water, measurements, photos | |
 | 5 · Check-ins and communication | Check-ins, feedback, pain reports, chat, reminders, push | |
 | 6 · Beta, then launch | TestFlight / Play internal testing with real coaches | |
@@ -28,8 +28,9 @@ All tables, permission rules and starter data are in `supabase/migrations/`, app
 5. `…0500_storage.sql` — private photo buckets and their access rules
 6. `…0600_library_seed.sql` — 48 exercises and a starter food list
 7. `…0700_function_grants.sql` — locks the database functions to signed-in users (from Supabase's security advisor)
+8. `…0800_program_builder.sql` — weekly schedule per session, one-step `save_program()`, assigning requires Training to be shared
 
-`npm run db:test` runs every migration on a throwaway local Postgres and checks 56 permission rules — for example: a coach sees workouts only when Training is shared, sees nothing while coaching is paused, cannot widen sharing, and loses all access when coaching ends, while the athlete keeps their history.
+`npm run db:test` runs every migration on a throwaway local Postgres and checks 65 permission rules — for example: a coach sees workouts only when Training is shared, sees nothing while coaching is paused, cannot widen sharing, and loses all access when coaching ends, while the athlete keeps their history.
 
 ## Share a test link (web)
 
