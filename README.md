@@ -31,6 +31,14 @@ All tables, permission rules and starter data are in `supabase/migrations/`, app
 
 `npm run db:test` runs every migration on a throwaway local Postgres and checks 56 permission rules — for example: a coach sees workouts only when Training is shared, sees nothing while coaching is paused, cannot widen sharing, and loses all access when coaching ends, while the athlete keeps their history.
 
+## Share a test link (web)
+
+```bash
+npm run deploy:web   # builds the web version and publishes it to EAS Hosting
+```
+
+The first run asks to link an Expo project and pick a name; the link is then `https://<name>.expo.app`. Run it again whenever you want testers to get the latest version.
+
 ## Run it
 
 ```bash

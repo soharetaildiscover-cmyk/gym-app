@@ -10,7 +10,8 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "db:test": "bash supabase/tests/run.sh"
+    "db:test": "bash supabase/tests/run.sh",
+    "deploy:web": "expo export --platform web && npx eas-cli@latest deploy --prod"
   },
   "dependencies": {
     "@expo-google-fonts/manrope": "^0.4.2",
