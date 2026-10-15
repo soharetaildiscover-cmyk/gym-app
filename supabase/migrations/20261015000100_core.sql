@@ -28,7 +28,7 @@ create type public.link_status as enum ('active', 'paused', 'ended');
 -- Shared trigger: updated_at
 -- ---------------------------------------------------------------------------
 create or replace function public.touch_updated_at()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql set search_path = public as $$
 begin
   new.updated_at := now();
   return new;
@@ -111,7 +111,7 @@ create trigger coaching_links_touch before update on public.coaching_links
 --   coach:   end only
 --   nobody:  re-open an ended link, or change who is on it
 create or replace function public.guard_link_update()
-returns trigger language plpgsql as $$
+returns trigger language plpgsql set search_path = public as $$
 declare
   me uuid := auth.uid();
 begin
@@ -149,7 +149,7 @@ create trigger coaching_links_guard before update on public.coaching_links
 -- ---------------------------------------------------------------------------
 create table public.invites (
   id                uuid primary key default gen_random_uuid(),
-  code              text not null unique default upper(substr(encode(gen_random_bytes(6), 'hex'), 1, 8)),
+  code              text not null unique default upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8)),
   coach_id          uuid not null references public.profiles (id) on delete cascade,
   package           text,
   suggested_scopes  public.share_scope[] not null default '{training}',

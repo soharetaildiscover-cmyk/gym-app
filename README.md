@@ -10,7 +10,7 @@ A coaching app where a coach and their athletes work from one shared, live recor
 
 | Phase | What | State |
 | --- | --- | --- |
-| 1 · Foundation | Schema + permission rules, sign-in, onboarding, athlete/coach tabs | ✅ built, waiting for the schema to be applied to Supabase |
+| 1 · Foundation | Schema + permission rules, sign-in, onboarding, athlete/coach tabs | ✅ built and live on the `gym-app-dev` Supabase project |
 | 2 · Coach connect | Invites, links, sharing scopes, roster | next |
 | 3 · Training | Exercise library, program builder, assign, workout logging | |
 | 4 · Nutrition and progress | Food, targets, water, measurements, photos | |
@@ -27,6 +27,7 @@ All tables, permission rules and starter data are in `supabase/migrations/`, app
 4. `…0400_checkins_comms.sql` — check-ins, feedback, recovery, pain reports, reminders, messages, notifications
 5. `…0500_storage.sql` — private photo buckets and their access rules
 6. `…0600_library_seed.sql` — 48 exercises and a starter food list
+7. `…0700_function_grants.sql` — locks the database functions to signed-in users (from Supabase's security advisor)
 
 `npm run db:test` runs every migration on a throwaway local Postgres and checks 56 permission rules — for example: a coach sees workouts only when Training is shared, sees nothing while coaching is paused, cannot widen sharing, and loses all access when coaching ends, while the athlete keeps their history.
 

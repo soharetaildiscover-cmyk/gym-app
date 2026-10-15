@@ -15,7 +15,7 @@ on conflict (id) do nothing;
 
 -- The first folder of a path as a uuid (null if it is not one).
 create or replace function public.path_owner(p_name text)
-returns uuid language plpgsql immutable as $$
+returns uuid language plpgsql immutable set search_path = public as $$
 begin
   return ((storage.foldername(p_name))[1])::uuid;
 exception when others then
